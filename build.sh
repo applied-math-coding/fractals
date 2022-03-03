@@ -1,13 +1,17 @@
 # build calc-engine
 cd calc-engine
 ./build.sh
-cp -r pkg ../client/worker-src/calc-engine-pkg
+rm -rf ../client/src/calc-engine-pkg
+mkdir ../client/src/calc-engine-pkg
+cp -r pkg/* ../client/src/calc-engine-pkg
+rm ../client/src/calc-engine-pkg/.gitignore
+rm ../client/src/calc-engine-pkg/.package.json
 cd ..
 
-# build worker-src
-cd client/worker-src
-cd calc-engine-pkg
-rm -f .gitignore
+# build client
+cd client
+rm -rf dist
+npm run build
 cd ..
 
 

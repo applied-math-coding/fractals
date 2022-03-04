@@ -1,7 +1,15 @@
 import init, { mandelbrot } from '../calc-engine-pkg/calc_engine';
 
-onmessage = async ({ data: { start, delta, size, max_iter } }:
-  { data: { start: number, delta: number, size: number, max_iter: number } }) => {
+onmessage = async ({ data: { startX, startY, delta, size, maxIter } }:
+  {
+    data: {
+      startX: number,
+      startY: number,
+      delta: number,
+      size: number,
+      maxIter: number
+    }
+  }) => {
   await init();
-  postMessage(mandelbrot(start, delta, size, max_iter));
+  postMessage(mandelbrot(startX, startY, delta, size, maxIter));
 }

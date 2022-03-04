@@ -12,6 +12,7 @@ checksum = "a4a45a46ab1f2412e53d3a0ade76ffad2025804294569aae387231a0cd6e0899"
 name = "calc-engine"
 version = "0.1.0"
 dependencies = [
+ "complex_algebra",
  "wasm-bindgen",
 ]
 
@@ -20,6 +21,12 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "complex_algebra"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ff64873c7b000fe7977f125add50575cbfeac88f9da6cfab1a52e6146b65fee"
 
 [[package]]
 name = "lazy_static"

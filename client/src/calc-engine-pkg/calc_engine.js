@@ -21,16 +21,17 @@ function getArrayU32FromWasm0(ptr, len) {
     return getUint32Memory0().subarray(ptr / 4, ptr / 4 + len);
 }
 /**
-* @param {number} start
+* @param {number} start_u
+* @param {number} start_v
 * @param {number} delta
 * @param {number} size
 * @param {number} max_iter
 * @returns {Uint32Array}
 */
-export function mandelbrot(start, delta, size, max_iter) {
+export function mandelbrot(start_u, start_v, delta, size, max_iter) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.mandelbrot(retptr, start, delta, size, max_iter);
+        wasm.mandelbrot(retptr, start_u, start_v, delta, size, max_iter);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var v0 = getArrayU32FromWasm0(r0, r1).slice();

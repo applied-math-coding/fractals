@@ -8,3 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.79" }
+complex_algebra = { version = "0.1.2" }

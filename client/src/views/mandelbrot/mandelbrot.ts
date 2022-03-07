@@ -1,32 +1,66 @@
 import { defineComponent } from "vue";
 import Worker from "@/workers/mandelbrot?worker";
+import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
+import Slider from 'primevue/slider';
+import InputSwitch from 'primevue/inputswitch';
+import ProgressSpinner from 'primevue/progressspinner';
+import { wait } from '@/utils';
+import { BehaviorSubject, merge } from 'rxjs';
+import { take, debounceTime } from 'rxjs/operators';
+
+type Interrupted = 'interrupted';
+const defaultZoomFactor = 1.5;
+const defaultStartX = -1.5;
+const defaultStartY = -1.0;
+const defaultCanvasWidth = 300;
+const defaultDelta = 2.0 / defaultCanvasWidth;
+const defaultAutoZoom = false;
+const defaultMaxIter = 1000;
 
 export default defineComponent({
+  components: {
+    Button,
+    InputNumber,
+    Slider,
+    InputSwitch,
+    ProgressSpinner
+  },
   data() {
     return {
-      canvasWidth: 300,
-      startX: -1.5,
-      startY: -1.5,
-      delta: 0.01,
-      zoomFactor: 1.5,
+      canvasWidth: defaultCanvasWidth,
+      startX: defaultStartX,
+      startY: defaultStartY,
+      delta: defaultDelta,
+      zoomFactor: defaultZoomFactor,
       autoZoomInterval: 1000,
-      autoZoom: true,
+      autoZoom: defaultAutoZoom,
       autoZoomCenter: [0, 0] as [number, number],
       autoZoomActive: false,
-      maxIter: 1000,
+      maxIter: defaultMaxIter,
       computing: false,
+      requestStopZoom: null as (() => void) | null,
+      worker: null as null | Worker,
+      interrupted: new BehaviorSubject<Interrupted | null>(null),
+      debouncedEvent: new BehaviorSubject<void>(undefined),
+      debouncedCallback: () => { }
     }
   },
-  async mounted() {
-    await this.computeMandelbrot();
+  mounted() {
+    this.doReset();
+    this.computeMandelbrot();
+    this.debouncedEvent
+      .pipe(debounceTime(500))
+      .subscribe(() => this.debouncedCallback());
   },
   methods: {
-    handleReset() {
-      //TODO
+    async handleReset() {
+      this.doInterrupt();
+      this.doReset();
+      this.doDebounced(() => this.computeMandelbrot());
     },
     handleStopAutoZoom() {
-      //TODO ensure by using a autoZoomStopping = true, that now click on canvas is triggering
-      // another auto-zoom
+      this.doStopZoom();
     },
     handleCanvasClicked(e: PointerEvent) {
       const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
@@ -38,9 +72,74 @@ export default defineComponent({
         this.doZoom(this.autoZoomCenter);
       }
     },
+    handleDrag() {
+      //TODO
+    },
+    handleCanvasWidthChanged(w: number) {
+      const [xm, ym] = [
+        this.startX + this.canvasWidth / 2 * this.delta,
+        this.startY + this.canvasWidth / 2 * this.delta
+      ];
+      this.startX = xm - this.delta * w / 2;
+      this.startY = ym - this.delta * w / 2;
+      this.canvasWidth = w;
+      this.doInterrupt();
+      if (!this.autoZoomActive) {
+        this.doDebounced(() => this.computeMandelbrot());
+      }
+    },
+    handleZoomFactorChanged() {
+      this.doInterrupt();
+    },
+    handleMaxIterChanged() {
+      this.doInterrupt();
+      if (!this.autoZoomActive) {
+        this.doDebounced(() => this.computeMandelbrot());
+      }
+    },
+    doDebounced(clb: () => void) {
+      this.debouncedCallback = clb;
+      this.debouncedEvent.next();
+    },
+    doInterrupt() {
+      this.worker?.terminate();
+      this.interrupted.next('interrupted');
+    },
+    async doStopZoom() {
+      return new Promise<void>(res => {
+        if (!this.autoZoomActive) {
+          res();
+        } else {
+          this.requestStopZoom = () => {
+            this.autoZoomActive = false;
+            this.requestStopZoom = null;
+            res();
+          }
+        }
+      });
+    },
+    async doReset() {
+      this.doInterrupt();
+      if (this.autoZoomActive) {
+        await this.doStopZoom();
+      }
+      this.zoomFactor = defaultZoomFactor;
+      this.startX = defaultStartX;
+      this.startY = defaultStartY;
+      this.canvasWidth = defaultCanvasWidth;
+      this.delta = defaultDelta;
+      this.autoZoom = defaultAutoZoom;
+      this.maxIter = defaultMaxIter;
+    },
     async doAutoZoom() {
       await wait(this.autoZoomInterval);
-      this.doZoom(this.autoZoomCenter).then(() => this.doAutoZoom());
+      if (this.requestStopZoom) {
+        this.requestStopZoom();
+        return;
+      }
+      merge(this.interrupted, this.doZoom(this.autoZoomCenter))
+        .pipe(take(1))
+        .subscribe(() => this.doAutoZoom());
       this.autoZoomCenter = [this.canvasWidth / 2, this.canvasWidth / 2];
     },
     doZoom([x, y]: [number, number]): Promise<void> {
@@ -51,17 +150,18 @@ export default defineComponent({
       return this.computeMandelbrot();
     },
     computeMandelbrot(): Promise<void> {
+      //TODO improve by using worker.compileStreaming
       this.computing = true;
       return new Promise(res => {
-        const w = new Worker();
-        w.postMessage({
+        this.worker = new Worker();
+        this.worker.postMessage({
           startX: this.startX,
           startY: this.startY,
           delta: this.delta,
           size: this.canvasWidth,
           maxIter: this.maxIter
         });
-        w.onmessage = ({ data }) => {
+        this.worker.onmessage = ({ data }) => {
           drawToCanvas({
             data: transformData(data, this.canvasWidth),
             canvas: this.$refs.canvas as HTMLCanvasElement,
@@ -70,15 +170,11 @@ export default defineComponent({
           });
           this.computing = false;
           res();
-        }
+        };
       });
     }
   }
 });
-
-function wait(millis: number): Promise<void> {
-  return new Promise(res => setTimeout(res, millis));
-}
 
 function transformData(data: Uint32Array, size: number): Uint32Array {
   const buffer = new ArrayBuffer(data.buffer.byteLength);

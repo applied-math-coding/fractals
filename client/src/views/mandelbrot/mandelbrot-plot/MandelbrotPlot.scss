@@ -4,6 +4,9 @@
   row-gap: 20px;
   flex-wrap: wrap;
   align-items: center;
+  padding-bottom: 30px;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--gray-300);
 
   .zoom-factor{
     width: min(100%, 200px);
@@ -35,7 +38,7 @@
   }
 
   canvas {
-    border: 1px solid #cccccc;
+    border: 1px solid var(--gray-300);
     max-width: 100%;
     cursor: move;
   }

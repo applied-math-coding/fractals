@@ -14,7 +14,7 @@ import { RouterLink, RouterView } from "vue-router";
   </div>
 </template>
 
-<style>
+<style lang="scss">
 body {
   margin: 0;
   padding: 20px;
@@ -22,12 +22,20 @@ body {
   color: var(--text-color);
 }
 
-.app-content{
+.app-content {
   max-width: 1000px;
   margin: 0 auto;
 }
 
-.secondary-text-color{
+.secondary-text-color {
   color: var(--text-color-secondary);
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  &.router-link-exact-active {
+    text-decoration: underline;
+  }
 }
 </style>

@@ -7,7 +7,6 @@ import InputSwitch from 'primevue/inputswitch';
 import ProgressSpinner from 'primevue/progressspinner';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import Divider from 'primevue/divider';
 
 const defaultZoomFactor = 1.5;
 const defaultStartX = -1.5;
@@ -17,13 +16,13 @@ const defaultDelta = 2.0 / defaultCanvasWidth;
 const defaultMaxIter = 1000;
 
 export default defineComponent({
+  name: 'MandelbrotPlot',
   components: {
     Button,
     InputNumber,
     Slider,
     InputSwitch,
-    ProgressSpinner,
-    Divider
+    ProgressSpinner
   },
   data() {
     return {

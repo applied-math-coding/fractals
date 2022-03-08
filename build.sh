@@ -7,6 +7,14 @@ cp -r pkg/* ../client/src/calc-engine-pkg
 rm ../client/src/calc-engine-pkg/package.json
 cd ..
 
+# build client for github pages
+cd client
+rm -rf dist
+npm run build:pages
+cd ..
+rm -rf docs
+cp -r client/dist/* docs
+
 # build client
 cd client
 rm -rf dist

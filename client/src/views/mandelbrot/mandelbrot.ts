@@ -5,17 +5,15 @@ import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
 import InputSwitch from 'primevue/inputswitch';
 import ProgressSpinner from 'primevue/progressspinner';
-import { wait } from '@/utils';
-import { BehaviorSubject, merge } from 'rxjs';
-import { take, debounceTime } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import Divider from 'primevue/divider';
 
-type Interrupted = 'interrupted';
 const defaultZoomFactor = 1.5;
 const defaultStartX = -1.5;
 const defaultStartY = -1.0;
 const defaultCanvasWidth = 300;
 const defaultDelta = 2.0 / defaultCanvasWidth;
-const defaultAutoZoom = false;
 const defaultMaxIter = 1000;
 
 export default defineComponent({
@@ -24,7 +22,8 @@ export default defineComponent({
     InputNumber,
     Slider,
     InputSwitch,
-    ProgressSpinner
+    ProgressSpinner,
+    Divider
   },
   data() {
     return {
@@ -33,17 +32,17 @@ export default defineComponent({
       startY: defaultStartY,
       delta: defaultDelta,
       zoomFactor: defaultZoomFactor,
-      autoZoomInterval: 1000,
-      autoZoom: defaultAutoZoom,
-      autoZoomCenter: [0, 0] as [number, number],
-      autoZoomActive: false,
       maxIter: defaultMaxIter,
       computing: false,
-      requestStopZoom: null as (() => void) | null,
       worker: null as null | Worker,
-      interrupted: new BehaviorSubject<Interrupted | null>(null),
       debouncedEvent: new BehaviorSubject<void>(undefined),
-      debouncedCallback: () => { }
+      debouncedCallback: () => { },
+      dragStart: null as null | { x: number, y: number }
+    }
+  },
+  computed: {
+    isTouchScreen(): boolean {
+      return window.matchMedia('(pointer: coarse)').matches;
     }
   },
   mounted() {
@@ -59,21 +58,57 @@ export default defineComponent({
       this.doReset();
       this.doDebounced(() => this.computeMandelbrot());
     },
-    handleStopAutoZoom() {
-      this.doStopZoom();
+    handleTouchStart(e: TouchEvent) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     },
-    handleCanvasClicked(e: PointerEvent) {
-      const rect = (e.target as HTMLCanvasElement).getBoundingClientRect();
-      this.autoZoomCenter = [e.clientX - rect.x, this.canvasWidth - (e.clientY - rect.y)];
-      if (this.autoZoom && !this.autoZoomActive) {
-        this.autoZoomActive = true;
-        this.doAutoZoom();
-      } else if (!this.autoZoomActive) {
-        this.doZoom(this.autoZoomCenter);
+    handleTouchEnd(e: TouchEvent) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.dragStart) {
+        const [transX, transY] = [
+          this.dragStart.x - e.changedTouches[0].clientX,
+          e.changedTouches[0].clientY - this.dragStart.y
+        ];
+        this.doDebounced(() => this.doTranslate(transX, transY));
       }
     },
-    handleDrag() {
-      //TODO
+    handleDragStart(e: DragEvent) {
+      if (this.isTouchScreen) {
+        return;
+      }
+      e.dataTransfer && (e.dataTransfer.dropEffect = 'move');
+      e.dataTransfer?.setDragImage(new Image(0, 0), 0, 0);
+      this.dragStart = { x: e.clientX, y: e.clientY };
+    },
+    handleDrop(e: DragEvent) {
+      if (this.isTouchScreen) {
+        return;
+      }
+      if (this.dragStart) {
+        const [transX, transY] = [
+          this.dragStart.x - e.clientX,
+          e.clientY - this.dragStart.y
+        ];
+        this.doDebounced(() => this.doTranslate(transX, transY));
+      }
+    },
+    handleDragOver(e: DragEvent) {
+      e.preventDefault();
+      e.dataTransfer && (e.dataTransfer.dropEffect = 'move');
+    },
+    handleZoomIn() {
+      this.doDebounced(() => {
+        this.doInterrupt();
+        this.doZoom(this.zoomFactor);
+      });
+    },
+    handleZoomOut() {
+      this.doDebounced(() => {
+        this.doInterrupt();
+        this.doZoom(1 / this.zoomFactor);
+      });
     },
     handleCanvasWidthChanged(w: number) {
       const [xm, ym] = [
@@ -84,18 +119,19 @@ export default defineComponent({
       this.startY = ym - this.delta * w / 2;
       this.canvasWidth = w;
       this.doInterrupt();
-      if (!this.autoZoomActive) {
-        this.doDebounced(() => this.computeMandelbrot());
-      }
+      this.doDebounced(() => this.computeMandelbrot());
     },
     handleZoomFactorChanged() {
       this.doInterrupt();
     },
     handleMaxIterChanged() {
       this.doInterrupt();
-      if (!this.autoZoomActive) {
-        this.doDebounced(() => this.computeMandelbrot());
-      }
+      this.doDebounced(() => this.computeMandelbrot());
+    },
+    doTranslate(transX: number, transY: number) {
+      this.startX = this.startX + transX * this.delta;
+      this.startY = this.startY + transY * this.delta;
+      this.computeMandelbrot();
     },
     doDebounced(clb: () => void) {
       this.debouncedCallback = clb;
@@ -103,48 +139,20 @@ export default defineComponent({
     },
     doInterrupt() {
       this.worker?.terminate();
-      this.interrupted.next('interrupted');
-    },
-    async doStopZoom() {
-      return new Promise<void>(res => {
-        if (!this.autoZoomActive) {
-          res();
-        } else {
-          this.requestStopZoom = () => {
-            this.autoZoomActive = false;
-            this.requestStopZoom = null;
-            res();
-          }
-        }
-      });
     },
     async doReset() {
       this.doInterrupt();
-      if (this.autoZoomActive) {
-        await this.doStopZoom();
-      }
       this.zoomFactor = defaultZoomFactor;
       this.startX = defaultStartX;
       this.startY = defaultStartY;
       this.canvasWidth = defaultCanvasWidth;
       this.delta = defaultDelta;
-      this.autoZoom = defaultAutoZoom;
       this.maxIter = defaultMaxIter;
     },
-    async doAutoZoom() {
-      await wait(this.autoZoomInterval);
-      if (this.requestStopZoom) {
-        this.requestStopZoom();
-        return;
-      }
-      merge(this.interrupted, this.doZoom(this.autoZoomCenter))
-        .pipe(take(1))
-        .subscribe(() => this.doAutoZoom());
-      this.autoZoomCenter = [this.canvasWidth / 2, this.canvasWidth / 2];
-    },
-    doZoom([x, y]: [number, number]): Promise<void> {
+    doZoom(factor: number): Promise<void> {
+      const [x, y] = [this.canvasWidth / 2, this.canvasWidth / 2];
       const [xm, ym] = [this.startX + x * this.delta, this.startY + y * this.delta];
-      this.delta = 1 / this.zoomFactor * this.delta;
+      this.delta = 1 / factor * this.delta;
       this.startX = xm - this.delta * this.canvasWidth / 2;
       this.startY = ym - this.delta * this.canvasWidth / 2;
       return this.computeMandelbrot();

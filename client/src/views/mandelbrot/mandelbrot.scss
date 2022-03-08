@@ -1,0 +1,42 @@
+.control-panel{
+  display: flex;
+  column-gap: 40px;
+  row-gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  .zoom-factor{
+    width: min(100%, 200px);
+  }
+
+  .size{
+    width: min(100%, 200px);
+  }
+}
+
+.canvas-container {
+  display: flex;
+  justify-content: center;
+
+  .canvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .spinner-wrapper {
+      --spinner-size: 20px;
+      height: var(--spinner-size);
+
+      .p-progress-spinner {
+        width: var(--spinner-size);
+        height: var(--spinner-size);
+      }
+    }
+  }
+
+  canvas {
+    border: 1px solid #cccccc;
+    max-width: 100%;
+    cursor: move;
+  }
+}

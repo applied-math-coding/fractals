@@ -10,6 +10,6 @@ onmessage = async ({ data: { startX, startY, delta, size, maxIter } }:
       maxIter: number
     }
   }) => {
-  await init('/build-wasm/calc_engine_bg.wasm');
+  await init(`/calc_engine_bg.wasm`);
   postMessage(mandelbrot(startX, startY, delta, size, maxIter));
 }

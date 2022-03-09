@@ -9,15 +9,6 @@ cp ../client/src/calc-engine-pkg/calc_engine_bg.wasm ../client/public
 rm ../client/src/calc-engine-pkg/package.json
 cd ..
 
-# build client for github pages
-cd client
-rm -rf dist
-npm run build:pages
-cd ..
-rm -rf docs
-mkdir docs
-cp -r client/dist/* docs
-
 # build client
 cd client
 rm -rf dist

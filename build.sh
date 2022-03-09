@@ -4,6 +4,8 @@ cd calc-engine
 rm -rf ../client/src/calc-engine-pkg
 mkdir ../client/src/calc-engine-pkg
 cp -r pkg/* ../client/src/calc-engine-pkg
+rm -f ../client/public/calc_engine_bg.wasm
+cp ../client/src/calc-engine-pkg/calc_engine_bg.wasm ../client/public
 rm ../client/src/calc-engine-pkg/package.json
 cd ..
 
@@ -11,7 +13,6 @@ cd ..
 cd client
 rm -rf dist
 npm run build:pages
-cp src/calc-engine-pkg/calc_engine_bg.wasm dist/assets/
 cd ..
 rm -rf docs
 mkdir docs

@@ -27,3 +27,5 @@ coverage
 *.sln
 *.sw?
 
+public/calc_engine_bg.wasm
+

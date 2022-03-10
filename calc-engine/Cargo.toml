@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-  "wasm-exports",
   "server",
+  "wasm-exports",
   "fractal-simulations"
 ]

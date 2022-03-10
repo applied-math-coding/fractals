@@ -9,14 +9,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4a45a46ab1f2412e53d3a0ade76ffad2025804294569aae387231a0cd6e0899"
 
 [[package]]
-name = "calc-engine"
-version = "0.1.0"
-dependencies = [
- "complex_algebra",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -27,6 +19,13 @@ name = "complex_algebra"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ff64873c7b000fe7977f125add50575cbfeac88f9da6cfab1a52e6146b65fee"
+
+[[package]]
+name = "fractal-simulations"
+version = "0.1.0"
+dependencies = [
+ "complex_algebra",
+]
 
 [[package]]
 name = "lazy_static"
@@ -60,6 +59,10 @@ checksum = "864d3e96a899863136fc6e99f3d7cae289dafe43bf2c5ac19b70df7210c0a145"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "server"
+version = "0.1.0"
 
 [[package]]
 name = "syn"
@@ -131,3 +134,11 @@ name = "wasm-bindgen-shared"
 version = "0.2.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d958d035c4438e28c70e4321a2911302f10135ce78a9c7834c0cab4123d06a2"
+
+[[package]]
+name = "wasm-exports"
+version = "0.1.0"
+dependencies = [
+ "fractal-simulations",
+ "wasm-bindgen",
+]

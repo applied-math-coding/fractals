@@ -1,4 +1,4 @@
-import init, { mandelbrot } from '../calc-engine-pkg/calc_engine';
+import init, { mandelbrot } from '../calc-engine-pkg/wasm_exports';
 
 onmessage = async ({ data: { startX, startY, delta, size, maxIter } }:
   {
@@ -10,6 +10,6 @@ onmessage = async ({ data: { startX, startY, delta, size, maxIter } }:
       maxIter: number
     }
   }) => {
-  await init(`${import.meta.env.BASE_URL}calc_engine_bg.wasm`);
+  await init(`${import.meta.env.BASE_URL}wasm_exports_bg.wasm`);
   postMessage(mandelbrot(startX, startY, delta, size, maxIter));
 }

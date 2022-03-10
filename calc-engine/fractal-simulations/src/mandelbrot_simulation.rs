@@ -1,6 +1,6 @@
 use complex_algebra::{c, re};
 
-pub fn compute(start_u: f64, start_v: f64, delta: f64, size: usize, max_iter: u32) -> Vec<u32> {
+pub fn simulate(start_u: f64, start_v: f64, delta: f64, size: usize, max_iter: u32) -> Vec<u32> {
   let mut res = vec![0u32; size * size];
   for v in 0..size {
     for u in 0..size {
@@ -23,6 +23,6 @@ mod tests {
 
   #[test]
   fn test_compute() {
-    assert_eq!(compute(0.0, 0.0, 0.1, 10, 1000).len(), 100);
+    assert_eq!(simulate(0.0, 0.0, 0.1, 10, 1000).len(), 100);
   }
 }

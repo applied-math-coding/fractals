@@ -27,5 +27,5 @@ coverage
 *.sln
 *.sw?
 
-public/calc_engine_bg.wasm
+public/wasm_exports_bg.wasm
 /.firebase/

@@ -75,7 +75,7 @@ async function load(module, imports) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('calc_engine_bg.wasm', import.meta.url);
+        input = new URL('wasm_exports_bg.wasm', import.meta.url);
     }
     const imports = {};
 

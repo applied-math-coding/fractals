@@ -1,4 +1,4 @@
-mod mandelbrot;
+use fractal_simulations;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -9,5 +9,6 @@ pub fn mandelbrot(
   size: usize,
   max_iter: u32,
 ) -> Box<[u32]> {
-  mandelbrot::compute(start_u, start_v, delta, size, max_iter).into_boxed_slice()
+  fractal_simulations::simulate_mandelbrot(start_u, start_v, delta, size, max_iter)
+    .into_boxed_slice()
 }
